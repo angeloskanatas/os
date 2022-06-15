@@ -1,4 +1,4 @@
 # os-lab
-Exercises for NTUA Operating Systems course (2021-2022)
+NTUA Operating Systems course exercises (2021-2022)
 
 Team: Angelos-Nikolaos Kanatas, Ioannis Asprogerakas
