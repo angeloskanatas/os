@@ -17,9 +17,6 @@
 
 #define MANDEL_MAX_ITERATION 100000
 
-#define perror_pthread(ret, msg) \
-        do { errno=ret; perror(msg); } while (0)
-
 
 int **buff; //2D Mandelbrot set output
 
@@ -51,23 +48,10 @@ int safe_atoi(char *s, int *val)
 
         l=strtol(s, &endp, 10);
         if(s!=endp && *endp=='\0') {
-                *val = l;
+                *val=l;
                 return 0;
         } else
                 return -1;
-}
-
-void *safe_malloc(size_t size)
-{
-        void *p;
-
-        if((p=malloc(size))==NULL) {
-                fprintf(stderr, "Out of memory, failed to allocate %zd bytes\n",
-                        size);
-                exit(1);
-        }
-
-        return p;
 }
 
 /*
@@ -114,14 +98,14 @@ void output_mandel_line(int fd, int color_val[])
         for(i=0; i<x_chars; i++) {
                 /* Set the current color, then output the point */
                 set_xterm_color(fd, color_val[i]);
-                if(write(fd, &point, 1) != 1) {
+                if(write(fd, &point, 1)!=1) {
                         perror("compute_and_output_mandel_line: write point");
                         exit(1);
                 }
         }
 
         /* Now that the line is done, output a newline character */
-        if(write(fd, &newline, 1) != 1) {
+        if(write(fd, &newline, 1)!=1) {
                 perror("compute_and_output_mandel_line: write newline");
                 exit(1);
         }
@@ -129,9 +113,9 @@ void output_mandel_line(int fd, int color_val[])
 
 void usage(char *argv0)
 {
-        fprintf(stderr, "Usage: %s thread_count\n\n"
+        fprintf(stderr, "Usage: %s processes_count\n\n"
                 "Exactly one argument required:\n"
-                "       thread_count: The number of threads to create.\n",
+                "       processes_count: The number of processes to create.\n",
                 argv0);
         exit(1);
 }
@@ -180,9 +164,9 @@ void destroy_shared_memory_area(void *addr, unsigned int numbytes) {
          * Determine the number of pages needed, round up the requested number of
          * pages
          */
-        pages=(numbytes - 1) / sysconf(_SC_PAGE_SIZE) + 1;
+        pages=(numbytes-1)/sysconf(_SC_PAGE_SIZE)+1;
 
-        if(munmap(addr, pages * sysconf(_SC_PAGE_SIZE)) == -1) {
+        if(munmap(addr, pages*sysconf(_SC_PAGE_SIZE))==-1) {
                 perror("destroy_shared_memory_area: munmap failed");
                 exit(1);
         }
@@ -216,10 +200,10 @@ int main(int argc, char *argv[])
         xstep=(xmax - xmin) / x_chars;
         ystep=(ymax - ymin) / y_chars;
 
-        if(argc != 2)
+        if(argc!=2)
                 usage(argv[0]);
-        if(safe_atoi(argv[1], &procnt) < 0 || procnt <= 0) {
-                fprintf(stderr, "`%s' is not valid for `thread_count'\n", argv[1]);
+        if(safe_atoi(argv[1], &procnt)<0 || procnt<=0) {
+                fprintf(stderr, "`%s' is not valid for `processes_count'\n", argv[1]);
                 exit(1);
         }
 

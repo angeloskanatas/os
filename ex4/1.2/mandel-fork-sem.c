@@ -18,23 +18,20 @@
 
 #define MANDEL_MAX_ITERATION 100000
 
-#define perror_pthread(ret, msg) \
-        do { errno = ret; perror(msg); } while (0)
-
 sem_t *sem;
 
 /*
  * Output at the terminal is is x_chars wide by y_chars long
 */
-int y_chars = 50;
-int x_chars = 90;
+int y_chars=50;
+int x_chars=90;
 
 /*
  * The part of the complex plane to be drawn:
  * upper left corner is (xmin, ymax), lower right corner is (xmax, ymin)
 */
-double xmin = -1.8, xmax = 1.0;
-double ymin = -1.0, ymax = 1.0;
+double xmin=-1.8, xmax=1.0;
+double ymin=-1.0, ymax=1.0;
 
 /*
  * Every character in the final output is
@@ -49,25 +46,12 @@ int safe_atoi(char *s, int *val)
         long l;
         char *endp;
 
-        l = strtol(s, &endp, 10);
-        if (s != endp && *endp == '\0') {
-                *val = l;
+        l=strtol(s, &endp, 10);
+        if(s!=endp && *endp=='\0') {
+                *val=l;
                 return 0;
         } else
                 return -1;
-}
-
-void *safe_malloc(size_t size)
-{
-        void *p;
-
-        if ((p = malloc(size)) == NULL) {
-                fprintf(stderr, "Out of memory, failed to allocate %zd bytes\n",
-                        size);
-                exit(1);
-        }
-
-        return p;
 }
 
 /*
@@ -85,19 +69,19 @@ void compute_mandel_line(int line, int color_val[])
         int val;
 
         /* Find out the y value corresponding to this line */
-        y = ymax - ystep * line;
+        y=ymax-ystep*line;
 
         /* and iterate for all points on this line */
-        for (x = xmin, n = 0; n < x_chars; x+= xstep, n++) {
+        for(x=xmin, n=0; n<x_chars; x+=xstep, n++) {
 
                 /* Compute the point's color value */
-                val = mandel_iterations_at_point(x, y, MANDEL_MAX_ITERATION);
-                if (val > 255)
-                        val = 255;
+                val=mandel_iterations_at_point(x, y, MANDEL_MAX_ITERATION);
+                if(val>255)
+                        val=255;
 
                 /* And store it in the color_val[] array */
-                val = xterm_color(val);
-                color_val[n] = val;
+                val=xterm_color(val);
+                color_val[n]=val;
         }
 }
 
@@ -111,17 +95,17 @@ void output_mandel_line(int fd, int color_val[])
         char point ='@';
         char newline='\n';
 
-        for (i = 0; i < x_chars; i++) {
+        for(i=0; i<x_chars; i++) {
                 /* Set the current color, then output the point */
                 set_xterm_color(fd, color_val[i]);
-                if (write(fd, &point, 1) != 1) {
+                if(write(fd, &point, 1)!=1) {
                         perror("compute_and_output_mandel_line: write point");
                         exit(1);
                 }
         }
 
         /* Now that the line is done, output a newline character */
-        if (write(fd, &newline, 1) != 1) {
+        if (write(fd, &newline, 1)!=1) {
                 perror("compute_and_output_mandel_line: write newline");
                 exit(1);
         }
@@ -129,9 +113,9 @@ void output_mandel_line(int fd, int color_val[])
 
 void usage(char *argv0)
 {
-        fprintf(stderr, "Usage: %s thread_count\n\n"
+        fprintf(stderr, "Usage: %s processes_count\n\n"
                 "Exactly one argument required:\n"
-                "       thread_count: The number of threads to create.\n",
+                "       processes_count: The number of processes to create.\n",
                 argv0);
         exit(1);
 }
@@ -155,7 +139,7 @@ void *create_shared_memory_area(unsigned int numbytes)
         int pages;
         void *addr;
 
-        if (numbytes == 0) {
+        if (numbytes==0) {
                 fprintf(stderr, "%s: internal error: called for numbytes == 0\n", __func__);
                 exit(1);
         }
@@ -164,10 +148,10 @@ void *create_shared_memory_area(unsigned int numbytes)
          * Determine the number of pages needed, round up the requested number of
          * pages
          */
-        pages = (numbytes - 1) / sysconf(_SC_PAGE_SIZE) + 1;
+        pages=(numbytes-1)/sysconf(_SC_PAGE_SIZE)+1;
 
         /* Create a shared, anonymous mapping for this number of pages */
-        addr = mmap(NULL, pages * sysconf(_SC_PAGE_SIZE), PROT_READ | PROT_WRITE,
+        addr=mmap(NULL, pages * sysconf(_SC_PAGE_SIZE), PROT_READ | PROT_WRITE,
 		 MAP_SHARED | MAP_ANONYMOUS, -1,0);
 	if(addr==MAP_FAILED) {
 		perror("mmap");
@@ -179,7 +163,7 @@ void *create_shared_memory_area(unsigned int numbytes)
 void destroy_shared_memory_area(void *addr, unsigned int numbytes) {
         int pages;
 
-        if (numbytes == 0) {
+        if(numbytes==0) {
                 fprintf(stderr, "%s: internal error: called for numbytes == 0\n", __func__);
                 exit(1);
         }
@@ -188,9 +172,9 @@ void destroy_shared_memory_area(void *addr, unsigned int numbytes) {
          * Determine the number of pages needed, round up the requested number of
          * pages
          */
-        pages = (numbytes - 1) / sysconf(_SC_PAGE_SIZE) + 1;
+        pages=(numbytes-1)/sysconf(_SC_PAGE_SIZE)+1;
 
-        if (munmap(addr, pages * sysconf(_SC_PAGE_SIZE)) == -1) {
+        if (munmap(addr, pages*sysconf(_SC_PAGE_SIZE))==-1) {
                 perror("destroy_shared_memory_area: munmap failed");
                 exit(1);
         }
@@ -218,8 +202,8 @@ int main(int argc, char *argv[])
 {
         int i, procnt, status;
 
-        xstep = (xmax - xmin) / x_chars;
-        ystep = (ymax - ymin) / y_chars;
+        xstep=(xmax-xmin)/x_chars;
+        ystep=(ymax-ymin)/y_chars;
 
         /*
          * signal handling
@@ -233,10 +217,10 @@ int main(int argc, char *argv[])
                 exit(1);
         }
 
-        if (argc != 2)
+        if(argc!=2)
                 usage(argv[0]);
-        if (safe_atoi(argv[1], &procnt) < 0 || procnt <= 0) {
-                fprintf(stderr, "`%s' is not valid for `thread_count'\n", argv[1]);
+        if (safe_atoi(argv[1], &procnt)<0 || procnt<=0) {
+                fprintf(stderr, "`%s' is not valid for `processes_count'\n", argv[1]);
                 exit(1);
         }
 
